@@ -39,10 +39,5 @@ public class AddTaskListener implements ActionListener {
         } catch (ParseException ex) {
             ex.printStackTrace();
         }
-//        JDialog dialog = new JDialog();
-//        dialog.setTitle("Add Task");
-//        dialog.setSize(200, 200);
-        JTextField nameField = new JTextField();
-        System.out.println("a");
     }
 }

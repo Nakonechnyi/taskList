@@ -15,7 +15,7 @@ import java.awt.event.ActionListener;
 public class MainMenu extends JFrame implements ActionListener{
     public MainMenu() throws HeadlessException {
         super("Console Task List");
-        setSize(600, 600);
+        setSize(300, 100);
         setLayout(new FlowLayout());
 
         JPanel panel = new JPanel();

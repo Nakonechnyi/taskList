@@ -1,5 +1,7 @@
 package org.nakonechnyi.service;
 
+import org.nakonechnyi.listener.CompletedTaskListButtonListener;
+
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -17,6 +19,7 @@ import java.util.Date;
 public class TaskListTableService implements TableModelListener {
 
     JFrame frame = new JFrame("Task List");
+    JFrame complitedFrame = new JFrame("Complited Task List");
 
     public void createAndShow() {
 
@@ -81,10 +84,33 @@ public class TaskListTableService implements TableModelListener {
             }
         });
 
-//        JButton complitedTasksButton = new JButton("Completed tasks");
-//        complitedTasksButton.addActionListener(new AddTaskListener());
+        JButton complitedTasksButton = new JButton("Completed tasks");
+        complitedTasksButton.addActionListener(new CompletedTaskListButtonListener());
 
         result.add(mainMenuButton);
+        result.add(complitedTasksButton);
         return result;
+    }
+
+    public void createAndShowCompleted() {
+        Object[] columns = {"Id", "Name", "Date", "Priority"};
+        Object[][] data = new TaskService().getAllCompletedInTableModelFormat();
+
+        DefaultTableModel model = new DefaultTableModel(data, columns);
+        model.addTableModelListener(this);
+        JTable table = new JTable(model);
+
+        table.setPreferredScrollableViewportSize(table.getPreferredSize());
+        JButton closeCompletedList = new JButton("Close");
+        closeCompletedList.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                complitedFrame.dispose();
+            }
+        });
+        complitedFrame.add(closeCompletedList, BorderLayout.SOUTH);
+        complitedFrame.add(new JScrollPane(table));
+        complitedFrame.pack();
+        complitedFrame.setVisible(true);
+        complitedFrame.revalidate();
     }
 }

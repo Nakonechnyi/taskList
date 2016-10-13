@@ -2,6 +2,8 @@ package org.nakonechnyi.repository;
 
 import org.nakonechnyi.domain.Task;
 
+import javax.swing.*;
+import java.net.ConnectException;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,98 +14,44 @@ import java.util.List;
  * @date 12.10.2016.
  */
 public class TaskRepository {
-//
-//    Connection connection = null;
-//    Statement stmt = null;
 
-
-//    public TaskRepository() {
-//        try {
-//            Class.forName("com.mysql.jdbc.Driver");
-//        } catch (ClassNotFoundException e) {
-//            System.out.println("Where is your MySQL JDBC Driver?");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        System.out.println("MySQL JDBC Driver Registered!");
-//
-//        try {
-//            connection = DriverManager
-//                    .getConnection("jdbc:mysql://localhost:3306/console_task_list","root", "polipoli");
-//
-//        } catch (SQLException e) {
-//            System.out.println("Connection Failed! Check output console");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        if (connection != null) {
-//            System.out.println("You made it, take control your database now!");
-//        } else {
-//            System.out.println("Failed to make connection!");
-//        }
-//    }
-
-
-    public List<Task> getAll() {
-        List<Task> result = new ArrayList<Task>();
-        String sql = "SELECT id, name, date, priority, statusDone FROM Tasks";
-
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet resultSet = null;
-
+    public List<Task> getAllCompleted() {
         try {
-            conn = getDBConnection();
-            stmt = conn.createStatement();
-            resultSet = stmt.executeQuery(sql);
-            while(resultSet.next()){
-                result.add(
-                        new Task(
-                                resultSet.getInt("id"),
-                                resultSet.getString("name"),
-                                resultSet.getDate("date"),
-                                resultSet.getInt("priority"),
-                                resultSet.getByte("statusDone")
-                        )
-                );
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            String sql = "SELECT id, name, date, priority FROM Tasks WHERE statusDone = 1";
+            return readDB(sql, (byte)1);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            return FakeTaskRepository.getAllCompleted();
         }
-
-        return result;
     }
 
-    private Connection getDBConnection(){
+    public List<Task> getAll() {
+        try {
+            String sql = "SELECT id, name, date, priority FROM Tasks WHERE statusDone = 0";
+            return readDB(sql, (byte) 0);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            return FakeTaskRepository.getAll();
+        }
+
+    }
+
+    private Connection getDBConnection() throws ConnectException {
         try {
             Class.forName("com.mysql.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             System.out.println("JDBC Driver?");
             e.printStackTrace();
+            throw new ConnectException();
         }
         Connection connection = null;
         try {
             connection = DriverManager
-                    .getConnection("jdbc:mysql://localhost:3306/console_task_list", "root", "polipol11");
+                    .getConnection("jdbc:mysql://localhost:3306/console_task_list", "roott", "polipol11");
         } catch (SQLException e) {
             System.out.println("Connection Failed! Check output console");
             e.printStackTrace();
+            throw new ConnectException();
         }
 
         return connection;
@@ -113,10 +61,15 @@ public class TaskRepository {
         String sqlQuery = "UPDATE console_task_list.tasks SET " +
                 "statusDone = '"+ (statusDone == true ? (byte)1 : (byte)0) +
                 "' WHERE id = "+ taskId;
-        updateDB(sqlQuery);
+        try {
+            updateDB(sqlQuery);
+        } catch (ConnectException e) {
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            FakeTaskRepository.updateStatus( statusDone, taskId);
+        }
     }
 
-    private void updateDB(String sqlQuery) {
+    private void updateDB(String sqlQuery) throws ConnectException {
         Connection conn = null;
         Statement stmt = null;
 
@@ -126,6 +79,7 @@ public class TaskRepository {
             stmt.executeUpdate(sqlQuery);
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new ConnectException();
         } finally {
             try {
                 if (stmt != null) {
@@ -147,6 +101,57 @@ public class TaskRepository {
                 task.getName() + "', '" +
                 format1.format(task.getDate()) + "', '" +
                 task.getPriority() + "');";
-        updateDB(sqlQuery);
+        try {
+            updateDB(sqlQuery);
+        } catch (ConnectException e) {
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            FakeTaskRepository.insert(task);
+        }
+    }
+
+
+    List<Task> readDB (String sqlQuery, byte statusDone) throws ConnectException {
+        List<Task> getList = new ArrayList<>();
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet resultSet = null;
+
+        try {
+            conn = getDBConnection();
+            stmt = conn.createStatement();
+            resultSet = stmt.executeQuery(sqlQuery);
+
+            while (resultSet.next()) {
+                getList.add(readTask(resultSet, statusDone));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return getList;
+    }
+
+    private Task readTask(ResultSet resultSet, byte statusDone) throws SQLException {
+        return new Task(
+                resultSet.getInt("id"),
+                resultSet.getString("name"),
+                resultSet.getDate("date"),
+                resultSet.getInt("priority"),
+                statusDone
+        );
+
     }
 }

@@ -15,7 +15,6 @@ public class TaskService {
     TaskRepository taskRepository = new TaskRepository();
     public void create(Task task) {
         taskRepository.insert(task);
-//        System.out.println("taskName: "+ taskName + ", date: " + date + ", priority: " + priority);
     }
 
     public Object[][] getAllInTableModelFormat() {
@@ -36,5 +35,19 @@ public class TaskService {
 
     public void saveAsDone(int taskId) {
         taskRepository.updateStatus(true, taskId);
+    }
+
+    public Object[][] getAllCompletedInTableModelFormat() {
+        List<Task> taskList = new TaskRepository().getAllCompleted();
+        Object[][] result = new Object[taskList.size()][4];
+        int rowIterator = 0;
+        for (Task task: taskList) {
+            result[rowIterator][0] = task.getId();
+            result[rowIterator][1] = task.getName();
+            result[rowIterator][2] = task.getDate();
+            result[rowIterator][3] = task.getPriority();
+            rowIterator++;
+        }
+        return result;
     }
 }
