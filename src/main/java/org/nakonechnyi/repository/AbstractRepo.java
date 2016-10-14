@@ -1,5 +1,6 @@
 package org.nakonechnyi.repository;
 
+import org.apache.log4j.Logger;
 import org.nakonechnyi.util.AppProperties;
 
 import java.net.ConnectException;
@@ -12,12 +13,13 @@ import java.sql.SQLException;
  * @date 14.10.2016.
  */
 public class AbstractRepo {
+    final static Logger logger = Logger.getLogger(AbstractRepo.class);
 
     Connection getDBConnection() throws ConnectException {
         try {
             Class.forName(AppProperties.DB_DRIVER);
         } catch (ClassNotFoundException e) {
-            System.out.println("JDBC Driver?");
+            logger.error( "JDBC Driver?", e);
             e.printStackTrace();
             throw new ConnectException();
         }
@@ -26,8 +28,8 @@ public class AbstractRepo {
             connection = DriverManager
                     .getConnection(AppProperties.DB_URL, AppProperties.DB_USER, AppProperties.DB_PASS);
         } catch (SQLException e) {
-            System.out.println("Connection Failed! Check output console");
-            e.printStackTrace();
+
+            logger.error("Connection Failed!", e);
             throw new ConnectException();
         }
 

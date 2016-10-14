@@ -1,5 +1,6 @@
 package org.nakonechnyi.repository;
 
+import org.apache.log4j.Logger;
 import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 
@@ -26,11 +27,15 @@ public class TaskRepository extends AbstractRepo{
     public static final String TABLE = AppProperties.DB_NAME + ".tasks";
     public static final String _ = ", ";
 
+
+    final static Logger logger = Logger.getLogger(TaskRepository.class);
+
     public List<Task> getAllCompleted() {
         try {
             String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 1";
             return readDB(sql, (byte)1);
         } catch (Exception e) {
+            logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
             return FakeTaskRepository.getAllCompleted();
         }
@@ -41,6 +46,7 @@ public class TaskRepository extends AbstractRepo{
             String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 0";
             return readDB(sql, (byte) 0);
         } catch (Exception e) {
+            logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
             return FakeTaskRepository.getAll();
         }

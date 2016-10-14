@@ -1,5 +1,7 @@
 package org.nakonechnyi.util;
 
+import org.apache.log4j.Logger;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -8,6 +10,9 @@ import java.text.SimpleDateFormat;
  * @date 14.10.2016.
  */
 public class Validator {
+
+    final static Logger logger = Logger.getLogger(Validator.class);
+
     public static boolean isTaskNameValid(String taskName) {
         return (taskName == null)||(taskName.length() == 0) ? false : true;
     }
@@ -23,7 +28,7 @@ public class Validator {
         try {
             sdf.parse(dateStr);
         } catch (ParseException e) {
-            e.printStackTrace();
+            logger.info("ParseException", e);
             return false;
         }
 
@@ -35,6 +40,7 @@ public class Validator {
             int num = Integer.parseInt(priority);
             return num > 0 ? true : false;
         } catch (NumberFormatException e) {
+            logger.info("NumberFormatException", e);
             return false;
         }
     }

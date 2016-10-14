@@ -6,9 +6,9 @@ package org.nakonechnyi.util;
  */
 public class AppProperties {
     public static final String DATE_FORMAT = "yyyy-MM-dd";
-    public static final String DB_NAME = "console_task_list";
-    public static final String DB_URL = "jdbc:mysql://localhost:3306/" + DB_NAME;
-    public static final String DB_USER = "root";
-    public static final String DB_PASS = "polipol11";
+    public static final String DB_NAME = "sql7140215";
+    public static final String DB_URL = "jdbc:mysql://sql7.freemysqlhosting.net:3306/" + DB_NAME;
+    public static final String DB_USER = "sql7140215";
+    public static final String DB_PASS = "JZhMRma7XX";
     public static final String DB_DRIVER = "com.mysql.jdbc.Driver";
 }

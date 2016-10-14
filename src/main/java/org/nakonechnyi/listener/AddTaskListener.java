@@ -1,5 +1,6 @@
 package org.nakonechnyi.listener;
 
+import org.apache.log4j.Logger;
 import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 import org.nakonechnyi.service.TaskService;
@@ -17,6 +18,8 @@ import java.util.Date;
  * @date 12.10.2016.
  */
 public class AddTaskListener implements ActionListener {
+
+    final static Logger logger = Logger.getLogger(AddTaskListener.class);
 
     public void actionPerformed(ActionEvent e) {
 
@@ -46,7 +49,7 @@ public class AddTaskListener implements ActionListener {
                 taskService.create(new Task(taskName, date, priority));
             }
         } catch (ParseException ex) {
-            ex.printStackTrace();
+            logger.info("ParseException.", ex);
         }
     }
 }
