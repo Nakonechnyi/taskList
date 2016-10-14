@@ -1,5 +1,6 @@
 package org.nakonechnyi.repository;
 
+import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 
 import javax.swing.*;
@@ -15,9 +16,19 @@ import java.util.List;
  */
 public class TaskRepository {
 
+    //Field names
+    public static final String ID = "id";
+    public static final String NAME = "name";
+    public static final String DATE = "date";
+    public static final String PRIORITY = "priority";
+    public static final String STATUS_DONE = "statusDone";
+
+    public static final String TABLE = AppProperties.DB_NAME + ".tasks";
+    public static final String _ = ", ";
+
     public List<Task> getAllCompleted() {
         try {
-            String sql = "SELECT id, name, date, priority FROM Tasks WHERE statusDone = 1";
+            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 1";
             return readDB(sql, (byte)1);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
@@ -27,7 +38,7 @@ public class TaskRepository {
 
     public List<Task> getAll() {
         try {
-            String sql = "SELECT id, name, date, priority FROM Tasks WHERE statusDone = 0";
+            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 0";
             return readDB(sql, (byte) 0);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
@@ -38,7 +49,7 @@ public class TaskRepository {
 
     private Connection getDBConnection() throws ConnectException {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName(AppProperties.DB_DRIVER);
         } catch (ClassNotFoundException e) {
             System.out.println("JDBC Driver?");
             e.printStackTrace();
@@ -47,7 +58,7 @@ public class TaskRepository {
         Connection connection = null;
         try {
             connection = DriverManager
-                    .getConnection("jdbc:mysql://localhost:3306/console_task_list", "roott", "polipol11");
+                    .getConnection(AppProperties.DB_URL, AppProperties.DB_USER, AppProperties.DB_PASS);
         } catch (SQLException e) {
             System.out.println("Connection Failed! Check output console");
             e.printStackTrace();
@@ -58,32 +69,27 @@ public class TaskRepository {
     }
 
     public void updateStatus(boolean statusDone, int taskId) {
-        String sqlQuery = "UPDATE console_task_list.tasks SET " +
-                "statusDone = '"+ (statusDone == true ? (byte)1 : (byte)0) +
-                "' WHERE id = "+ taskId;
-        try {
-            updateDB(sqlQuery);
-        } catch (ConnectException e) {
-            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
-            FakeTaskRepository.updateStatus( statusDone, taskId);
-        }
-    }
-
-    private void updateDB(String sqlQuery) throws ConnectException {
         Connection conn = null;
-        Statement stmt = null;
+        PreparedStatement stmnt = null;
+
+        String sqlQuery = "UPDATE " + TABLE +
+                " SET " +
+                STATUS_DONE + " = '"+ (statusDone == true ? 1 : 0) +
+                "' WHERE " + ID + " = ?";
 
         try {
             conn = getDBConnection();
-            stmt = conn.createStatement();
-            stmt.executeUpdate(sqlQuery);
-        } catch (SQLException e) {
+            stmnt = conn.prepareStatement(sqlQuery);
+            stmnt.setInt(1, taskId);
+            stmnt.executeUpdate();
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new ConnectException();
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            FakeTaskRepository.updateStatus( statusDone, taskId);
         } finally {
             try {
-                if (stmt != null) {
-                    stmt.close();
+                if (stmnt != null) {
+                    stmnt.close();
                 }
                 if (conn != null) {
                     conn.close();
@@ -92,34 +98,57 @@ public class TaskRepository {
                 e.printStackTrace();
             }
         }
+
     }
 
     public void insert(Task task) {
-
-        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd");
-        String sqlQuery = "INSERT INTO console_task_list.tasks (name, date, priority ) VALUES ('"+
-                task.getName() + "', '" +
-                format1.format(task.getDate()) + "', '" +
-                task.getPriority() + "');";
+        Connection conn = null;
+        PreparedStatement stmnt = null;
+        SimpleDateFormat format1 = new SimpleDateFormat(AppProperties.DATE_FORMAT);
+        String sqlQuery = "INSERT INTO " + TABLE + " (" + NAME + _ + DATE + _ + PRIORITY + ") VALUES ( ?, ?, ?);";
         try {
+            conn = getDBConnection();
+            stmnt = conn.prepareStatement(sqlQuery);
+            stmnt.setString(1, task.getName());
+            stmnt.setString(2, format1.format(task.getDate()));
+            stmnt.setInt(3, task.getPriority());
+            stmnt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            FakeTaskRepository.insert(task);
+        } finally {
+            try {
+                if (stmnt != null) {
+                    stmnt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /*try {
             updateDB(sqlQuery);
         } catch (ConnectException e) {
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
             FakeTaskRepository.insert(task);
-        }
+        }*/
     }
 
 
     List<Task> readDB (String sqlQuery, byte statusDone) throws ConnectException {
         List<Task> getList = new ArrayList<>();
         Connection conn = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet resultSet = null;
 
         try {
             conn = getDBConnection();
-            stmt = conn.createStatement();
-            resultSet = stmt.executeQuery(sqlQuery);
+            stmt = conn.prepareStatement(sqlQuery);
+            resultSet = stmt.executeQuery();
 
             while (resultSet.next()) {
                 getList.add(readTask(resultSet, statusDone));
@@ -146,10 +175,10 @@ public class TaskRepository {
 
     private Task readTask(ResultSet resultSet, byte statusDone) throws SQLException {
         return new Task(
-                resultSet.getInt("id"),
-                resultSet.getString("name"),
-                resultSet.getDate("date"),
-                resultSet.getInt("priority"),
+                resultSet.getInt(ID),
+                resultSet.getString(NAME),
+                resultSet.getDate(DATE),
+                resultSet.getInt(PRIORITY),
                 statusDone
         );
 

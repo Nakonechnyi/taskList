@@ -1,5 +1,6 @@
 package org.nakonechnyi.repository;
 
+import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 
 import java.text.ParseException;
@@ -19,7 +20,7 @@ public class FakeTaskRepository {
     private static List<Task> fillData() {
         List<Task> result = new ArrayList<>();
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat formatter = new SimpleDateFormat(AppProperties.DATE_FORMAT);
         try {
             result.add(new Task (1, "Build House", formatter.parse("2016-10-10"), 1, (byte)1 ));
             result.add(new Task (2, "Build House2", formatter.parse("2016-10-10"), 2, (byte)0 ));

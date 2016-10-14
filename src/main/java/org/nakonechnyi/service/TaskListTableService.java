@@ -8,8 +8,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Date;
 
 /**
@@ -20,13 +18,15 @@ public class TaskListTableService implements TableModelListener {
 
     JFrame frame = new JFrame("Task List");
     JFrame complitedFrame = new JFrame("Complited Task List");
+    private static final Object[] COLUMNS = {"Id", "Name", "Date", "Priority", "Status", "Comment"};
+    private static final Object[] COMPLITED_COLUMNS = {"Id", "Name", "Date", "Priority"};
 
     public void createAndShow() {
 
-        Object[] columns = {"Id", "Name", "Date", "Priority", "Status", "Comment"};
+
         Object[][] data = new TaskService().getAllInTableModelFormat();
 
-        DefaultTableModel model = new DefaultTableModel(data, columns);
+        DefaultTableModel model = new DefaultTableModel(data, COLUMNS);
         model.addTableModelListener(this);
         JTable table = new JTable(model) {
 
@@ -78,11 +78,7 @@ public class TaskListTableService implements TableModelListener {
     public JPanel getButtons() {
         JPanel result = new JPanel();
         JButton mainMenuButton = new JButton("Main menu");
-        mainMenuButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                frame.dispose();
-            }
-        });
+        mainMenuButton.addActionListener(e -> frame.dispose());
 
         JButton complitedTasksButton = new JButton("Completed tasks");
         complitedTasksButton.addActionListener(new CompletedTaskListButtonListener());
@@ -93,20 +89,15 @@ public class TaskListTableService implements TableModelListener {
     }
 
     public void createAndShowCompleted() {
-        Object[] columns = {"Id", "Name", "Date", "Priority"};
         Object[][] data = new TaskService().getAllCompletedInTableModelFormat();
 
-        DefaultTableModel model = new DefaultTableModel(data, columns);
+        DefaultTableModel model = new DefaultTableModel(data, COMPLITED_COLUMNS);
         model.addTableModelListener(this);
         JTable table = new JTable(model);
 
         table.setPreferredScrollableViewportSize(table.getPreferredSize());
         JButton closeCompletedList = new JButton("Close");
-        closeCompletedList.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                complitedFrame.dispose();
-            }
-        });
+        closeCompletedList.addActionListener(e -> complitedFrame.dispose());
         complitedFrame.add(closeCompletedList, BorderLayout.SOUTH);
         complitedFrame.add(new JScrollPane(table));
         complitedFrame.pack();

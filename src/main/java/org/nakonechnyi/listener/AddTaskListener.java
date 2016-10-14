@@ -1,5 +1,6 @@
 package org.nakonechnyi.listener;
 
+import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 import org.nakonechnyi.service.TaskService;
 
@@ -24,10 +25,11 @@ public class AddTaskListener implements ActionListener {
         Date date;
         int priority;
         try {
-            taskName = JOptionPane.showInputDialog("Enter task name:");
-            dateStr = JOptionPane.showInputDialog("Enter date in yyyy-MM-dd format (like \"2016-10-13\"):");
+            SimpleDateFormat formatter = new SimpleDateFormat(AppProperties.DATE_FORMAT);
 
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            taskName = JOptionPane.showInputDialog("Enter task name:");
+            dateStr = JOptionPane.showInputDialog("Enter date in " + AppProperties.DATE_FORMAT +
+                    " format (like " + formatter.format(new Date()) + "):");
             date = formatter.parse(dateStr);
 
             priority = Integer.parseInt(JOptionPane.showInputDialog("Enter priority:"));
