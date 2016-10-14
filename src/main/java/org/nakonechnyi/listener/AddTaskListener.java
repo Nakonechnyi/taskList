@@ -3,6 +3,7 @@ package org.nakonechnyi.listener;
 import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
 import org.nakonechnyi.service.TaskService;
+import org.nakonechnyi.util.Validator;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -20,20 +21,26 @@ public class AddTaskListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
 
         TaskService taskService = new TaskService();
-        String taskName;
-        String dateStr;
+        String taskName = null;
+        String dateStr = null;
+        String priorityStr = null;
         Date date;
-        int priority;
+        int priority = 0;
         try {
             SimpleDateFormat formatter = new SimpleDateFormat(AppProperties.DATE_FORMAT);
-
-            taskName = JOptionPane.showInputDialog("Enter task name:");
-            dateStr = JOptionPane.showInputDialog("Enter date in " + AppProperties.DATE_FORMAT +
-                    " format (like " + formatter.format(new Date()) + "):");
+            while (!Validator.isTaskNameValid(taskName)) {
+                taskName = JOptionPane.showInputDialog("Enter task name:");
+            }
+            while (!Validator.isDateStrValid(dateStr)) {
+                dateStr = JOptionPane.showInputDialog("Enter date in " + AppProperties.DATE_FORMAT +
+                        " format (like " + formatter.format(new Date()) + "):");
+            }
             date = formatter.parse(dateStr);
 
-            priority = Integer.parseInt(JOptionPane.showInputDialog("Enter priority:"));
-
+            while (!Validator.isPriorityValid(priorityStr)) {
+                priorityStr = JOptionPane.showInputDialog("Enter priority:");
+            }
+            priority = Integer.parseInt(priorityStr);
             int confirm = JOptionPane.showConfirmDialog(null, "Save new task: " + taskName + ", on: " + date + " with " + priority + " priority?");
             if (confirm == 0 ) {
                 taskService.create(new Task(taskName, date, priority));

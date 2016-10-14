@@ -14,7 +14,7 @@ import java.util.List;
  * @autor A_Nakonechnyi
  * @date 12.10.2016.
  */
-public class TaskRepository {
+public class TaskRepository extends AbstractRepo{
 
     //Field names
     public static final String ID = "id";
@@ -45,27 +45,6 @@ public class TaskRepository {
             return FakeTaskRepository.getAll();
         }
 
-    }
-
-    private Connection getDBConnection() throws ConnectException {
-        try {
-            Class.forName(AppProperties.DB_DRIVER);
-        } catch (ClassNotFoundException e) {
-            System.out.println("JDBC Driver?");
-            e.printStackTrace();
-            throw new ConnectException();
-        }
-        Connection connection = null;
-        try {
-            connection = DriverManager
-                    .getConnection(AppProperties.DB_URL, AppProperties.DB_USER, AppProperties.DB_PASS);
-        } catch (SQLException e) {
-            System.out.println("Connection Failed! Check output console");
-            e.printStackTrace();
-            throw new ConnectException();
-        }
-
-        return connection;
     }
 
     public void updateStatus(boolean statusDone, int taskId) {
@@ -129,13 +108,6 @@ public class TaskRepository {
                 e.printStackTrace();
             }
         }
-
-        /*try {
-            updateDB(sqlQuery);
-        } catch (ConnectException e) {
-            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
-            FakeTaskRepository.insert(task);
-        }*/
     }
 
 
