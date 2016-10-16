@@ -47,6 +47,7 @@ public class AddTaskListener implements ActionListener {
             int confirm = JOptionPane.showConfirmDialog(null, "Save new task: " + taskName + ", on: " + date + " with " + priority + " priority?");
             if (confirm == 0 ) {
                 taskService.create(new Task(taskName, date, priority));
+                logger.info("Created Task: " + taskName + ", on " + date + " with priority " + priority);
             }
         } catch (ParseException ex) {
             logger.info("ParseException.", ex);

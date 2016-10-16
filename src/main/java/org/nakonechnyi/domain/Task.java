@@ -67,4 +67,15 @@ public class Task {
     public void setStatusDone(byte statusDone) {
         this.statusDone = statusDone;
     }
+
+    @Override
+    public String toString() {
+        return "Task{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", date=" + date +
+                ", priority=" + priority +
+                ", statusDone=" + statusDone +
+                '}';
+    }
 }

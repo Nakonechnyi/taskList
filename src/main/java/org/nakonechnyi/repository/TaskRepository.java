@@ -1,14 +1,15 @@
 package org.nakonechnyi.repository;
 
 import org.apache.log4j.Logger;
-import org.nakonechnyi.util.AppProperties;
 import org.nakonechnyi.domain.Task;
+import org.nakonechnyi.util.AppProperties;
 
 import javax.swing.*;
-import java.net.ConnectException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,13 +28,12 @@ public class TaskRepository extends AbstractRepo{
     public static final String TABLE = AppProperties.DB_NAME + ".tasks";
     public static final String _ = ", ";
 
-
     final static Logger logger = Logger.getLogger(TaskRepository.class);
 
     public List<Task> getAllCompleted() {
         try {
-            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 1";
-            return readDB(sql, (byte)1);
+            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + _ + STATUS_DONE + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 1";
+            return (List<Task>)(List<?>)readDB(sql);
         } catch (Exception e) {
             logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
@@ -43,8 +43,8 @@ public class TaskRepository extends AbstractRepo{
 
     public List<Task> getAll() {
         try {
-            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 0";
-            return readDB(sql, (byte) 0);
+            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + _ + STATUS_DONE + " FROM " + TABLE + " WHERE " + STATUS_DONE + " = 0";
+            return (List<Task>)(List<?>)readDB(sql);
         } catch (Exception e) {
             logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
@@ -53,7 +53,7 @@ public class TaskRepository extends AbstractRepo{
 
     }
 
-    public void updateStatus(boolean statusDone, int taskId) {
+    public boolean updateStatus(boolean statusDone, int taskId) {
         Connection conn = null;
         PreparedStatement stmnt = null;
 
@@ -66,9 +66,9 @@ public class TaskRepository extends AbstractRepo{
             conn = getDBConnection();
             stmnt = conn.prepareStatement(sqlQuery);
             stmnt.setInt(1, taskId);
-            stmnt.executeUpdate();
+            return stmnt.executeUpdate() == 1;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
             FakeTaskRepository.updateStatus( statusDone, taskId);
         } finally {
@@ -80,13 +80,13 @@ public class TaskRepository extends AbstractRepo{
                     conn.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
-
+        return false;
     }
 
-    public void insert(Task task) {
+    public boolean insert(Task task) {
         Connection conn = null;
         PreparedStatement stmnt = null;
         SimpleDateFormat format1 = new SimpleDateFormat(AppProperties.DATE_FORMAT);
@@ -97,9 +97,9 @@ public class TaskRepository extends AbstractRepo{
             stmnt.setString(1, task.getName());
             stmnt.setString(2, format1.format(task.getDate()));
             stmnt.setInt(3, task.getPriority());
-            stmnt.executeUpdate();
+            return stmnt.executeUpdate() == 1;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e);
             JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
             FakeTaskRepository.insert(task);
         } finally {
@@ -111,28 +111,29 @@ public class TaskRepository extends AbstractRepo{
                     conn.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
+        return false;
     }
 
-
-    List<Task> readDB (String sqlQuery, byte statusDone) throws ConnectException {
-        List<Task> getList = new ArrayList<>();
+    public Task getById(int taskId) {
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet resultSet = null;
 
         try {
+            String sql = "SELECT " + ID + _ + NAME + _ + DATE + _ + PRIORITY + _ + STATUS_DONE + " FROM " + TABLE + " WHERE " + ID + " = ?";
             conn = getDBConnection();
-            stmt = conn.prepareStatement(sqlQuery);
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, taskId);
             resultSet = stmt.executeQuery();
-
-            while (resultSet.next()) {
-                getList.add(readTask(resultSet, statusDone));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            resultSet.next();
+            return readObj(resultSet);
+        } catch (Exception e) {
+            logger.error(e);
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            return FakeTaskRepository.getById(taskId);
         } finally {
             try {
                 if (resultSet != null) {
@@ -145,20 +146,52 @@ public class TaskRepository extends AbstractRepo{
                     conn.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error(e);
             }
         }
-        return getList;
     }
 
-    private Task readTask(ResultSet resultSet, byte statusDone) throws SQLException {
+    public boolean delete(int taskId) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet resultSet = null;
+
+        try {
+            String sql = "DELETE FROM " + TABLE + " WHERE " + ID + " = ? ;";
+            conn = getDBConnection();
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, taskId);
+            return stmt.executeUpdate() == 1;
+        } catch (Exception e) {
+            logger.error(e);
+            JOptionPane.showMessageDialog(null, "Original DB not connected! Will be used FakeTaskRepository.","Warning", JOptionPane.WARNING_MESSAGE);
+            FakeTaskArchiveRepository.delete(taskId);
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                logger.error(e);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    Task readObj(ResultSet resultSet) throws SQLException {
         return new Task(
                 resultSet.getInt(ID),
                 resultSet.getString(NAME),
                 resultSet.getDate(DATE),
                 resultSet.getInt(PRIORITY),
-                statusDone
+                resultSet.getByte(STATUS_DONE)
         );
-
     }
 }

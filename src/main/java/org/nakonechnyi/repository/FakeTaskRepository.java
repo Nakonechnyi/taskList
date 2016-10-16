@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
  * @autor A_Nakonechnyi
  * @date 13.10.2016.
  */
+@Deprecated
 public class FakeTaskRepository {
 
     private static List<Task> tasks = fillData();
@@ -41,11 +42,12 @@ public class FakeTaskRepository {
         return tasks.stream().filter(task -> task.getStatusDone()==(byte)0).collect(Collectors.toList());
     }
 
-    public static void updateStatus(boolean statusDone, int taskId) {
+    public static boolean updateStatus(boolean statusDone, int taskId) {
         tasks.stream().filter(task -> task.getId() == taskId).forEach(task -> task.setStatusDone(statusDone == true ? (byte) 1 : (byte) 0 ));
+        return false;
     }
 
-    public static void insert(Task task) {
+    public static boolean insert(Task task) {
         int maxId = 0;
         for( Task iter: tasks) {
             if (iter.getId() > maxId) {
@@ -55,5 +57,10 @@ public class FakeTaskRepository {
         task.setId(++maxId);
         task.setStatusDone((byte)0);
         tasks.add(task);
+        return true;
+    }
+
+    public static Task getById(int taskId) {
+        return tasks.stream().filter(task -> task.getId() == taskId).findFirst().get();
     }
 }
