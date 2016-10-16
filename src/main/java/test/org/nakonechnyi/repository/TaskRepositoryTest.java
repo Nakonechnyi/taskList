@@ -1,7 +1,8 @@
-package org.nakonechnyi.repository;
+package test.org.nakonechnyi.repository;
 
 import org.junit.Assert;
 import org.nakonechnyi.domain.Task;
+import org.nakonechnyi.repository.TaskRepository;
 import org.nakonechnyi.util.AppProperties;
 
 import java.text.ParseException;
